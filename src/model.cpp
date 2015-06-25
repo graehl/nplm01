@@ -33,8 +33,8 @@ namespace nplm
     this->output_embedding_dimension = output_embedding_dimension;
     premultiplied = false;
 }
-  
-void model::initialize(mt19937 &init_engine, bool init_normal, double init_range, double init_bias)
+
+void model::initialize(boost::random::mt19937 &init_engine, bool init_normal, double init_range, double init_bias)
 {
     input_layer.initialize(init_engine, init_normal, init_range);
     output_layer.initialize(init_engine, init_normal, init_range, init_bias);
@@ -112,7 +112,7 @@ void model::readConfig(const string &filename)
     readConfig(config_file);
     config_file.close();
 }
- 
+
 void model::read(const string &filename)
 {
     vector<string> input_words;
@@ -124,10 +124,10 @@ void model::read(const string &filename, vector<string> &input_words, vector<str
 {
     ifstream file(filename.c_str());
     if (!file) throw runtime_error("Could not open file " + filename);
-    
+
     param myParam;
     string line;
-    
+
     while (getline(file, line))
     {
 	if (line == "\\config")
@@ -179,12 +179,12 @@ void model::read(const string &filename, vector<string> &input_words, vector<str
 }
 
     void model::write(const string &filename, const vector<string> &input_words, const vector<string> &output_words)
-{ 
+{
     write(filename, &input_words, &output_words);
 }
 
-void model::write(const string &filename) 
-{ 
+void model::write(const string &filename)
+{
     write(filename, NULL, NULL);
 }
 
@@ -192,7 +192,7 @@ void model::write(const string &filename)
 {
     ofstream file(filename.c_str());
     if (!file) throw runtime_error("Could not open file " + filename);
-    
+
     file << "\\config" << endl;
     file << "version 1" << endl;
     file << "ngram_size " << ngram_size << endl;
@@ -203,7 +203,7 @@ void model::write(const string &filename)
     file << "output_embedding_dimension " << output_embedding_dimension << endl;
     file << "activation_function " << activation_function_to_string(activation_function) << endl;
     file << endl;
-    
+
     if (input_pwords)
     {
         file << "\\input_vocab" << endl;
@@ -221,23 +221,23 @@ void model::write(const string &filename)
     file << "\\input_embeddings" << endl;
     input_layer.write(file);
     file << endl;
-    
+
     file << "\\hidden_weights 1" << endl;
     first_hidden_linear.write(file);
     file << endl;
-    
+
     file << "\\hidden_weights 2" << endl;
     second_hidden_linear.write(file);
     file << endl;
-    
+
     file << "\\output_weights" << endl;
     output_layer.write_weights(file);
     file << endl;
-    
+
     file << "\\output_biases" << endl;
     output_layer.write_biases(file);
     file << endl;
-    
+
     file << "\\end" << endl;
     file.close();
 }

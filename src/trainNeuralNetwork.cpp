@@ -6,7 +6,7 @@
 #include <vector>
 #include <algorithm>
 
-#include <boost/unordered_map.hpp> 
+#include <boost/unordered_map.hpp>
 #include <boost/functional.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/random/mersenne_twister.hpp>
@@ -41,7 +41,7 @@ typedef unordered_map<Matrix<int,Dynamic,1>, double> vector_map;
 typedef long long int data_size_t; // training data can easily exceed 2G instances
 
 int main(int argc, char** argv)
-{ 
+{
     param myParam;
     try {
       // program options //
@@ -228,7 +228,7 @@ int main(int argc, char** argv)
 
     //unsigned seed = std::time(0);
     unsigned seed = 1234; //for testing only
-    mt19937 rng(seed);
+    boost::random::mt19937 rng(seed);
 
     /////////////////////////READING IN THE TRAINING AND VALIDATION DATA///////////////////
     /////////////////////////////////////////////////////////////////////////////////////
@@ -256,14 +256,14 @@ int main(int argc, char** argv)
     // Randomly shuffle training data to improve learning
     for (data_size_t i=training_data_size-1; i>0; i--)
     {
-        data_size_t j = uniform_int_distribution<data_size_t>(0, i-1)(rng);
-	training_data.col(i).swap(training_data.col(j));
+        data_size_t j = boost::random::uniform_int_distribution<data_size_t>(0, i-1)(rng);
+        training_data.col(i).swap(training_data.col(j));
     }
 
     // Read validation data
     vector<int> validation_data_flat;
     int validation_data_size = 0;
-    
+
     if (myParam.validation_file != "")
     {
 	readDataFile(myParam.validation_file, myParam.ngram_size, validation_data_flat);
@@ -279,8 +279,8 @@ int main(int argc, char** argv)
     if (myParam.input_words_file != "")
     {
         readWordsFile(myParam.input_words_file, input_words);
-	if (myParam.input_vocab_size == 0)
-	    myParam.input_vocab_size = input_words.size();
+        if (myParam.input_vocab_size == 0)
+          myParam.input_vocab_size = input_words.size();
     }
 
     vector<string> output_words;
@@ -297,19 +297,19 @@ int main(int argc, char** argv)
     for (data_size_t train_id=0; train_id < training_data_size; train_id++)
     {
         int output_word = training_data(myParam.ngram_size-1, train_id);
-	unigram_counts[output_word] += 1;
+        unigram_counts[output_word] += 1;
     }
     multinomial<data_size_t> unigram (unigram_counts);
 
     ///// Create and initialize the neural network and associated propagators.
 
     model nn(myParam.ngram_size,
-        myParam.input_vocab_size,
-        myParam.output_vocab_size,
-        myParam.input_embedding_dimension,
-	      myParam.num_hidden,
-        myParam.output_embedding_dimension,
-        myParam.share_embeddings);
+             myParam.input_vocab_size,
+             myParam.output_vocab_size,
+             myParam.input_embedding_dimension,
+             myParam.num_hidden,
+             myParam.output_embedding_dimension,
+             myParam.share_embeddings);
 
     nn.initialize(rng, myParam.init_normal, myParam.init_range, -log(myParam.output_vocab_size));
     nn.set_activation_function(string_to_activation_function(myParam.activation_function));
@@ -320,7 +320,7 @@ int main(int argc, char** argv)
     SoftmaxNCELoss<multinomial<data_size_t> > softmax_loss(unigram);
     // normalization parameters
     vector_map c_h, c_h_running_gradient;
-    
+
     ///////////////////////TRAINING THE NEURAL NETWORK////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////////////
 
@@ -332,7 +332,7 @@ int main(int argc, char** argv)
     {
         num_validation_batches = (validation_data_size-1)/myParam.validation_minibatch_size+1;
 	cerr<<"Number of validation minibatches: "<<num_validation_batches<<endl;
-    } 
+    }
 
     double current_momentum = myParam.initial_momentum;
     double momentum_delta = (myParam.final_momentum - myParam.initial_momentum)/(myParam.num_epochs-1);
@@ -359,11 +359,11 @@ int main(int argc, char** argv)
     }
 
     for (int epoch=0; epoch<myParam.num_epochs; epoch++)
-    { 
+    {
         cerr << "Epoch " << epoch+1 << endl;
         cerr << "Current learning rate: " << current_learning_rate << endl;
 
-        if (myParam.use_momentum) 
+        if (myParam.use_momentum)
 	    cerr << "Current momentum: " << current_momentum << endl;
 	else
             current_momentum = -1;
@@ -388,11 +388,11 @@ int main(int argc, char** argv)
             if (batch > 0 && batch % 10000 == 0)
             {
 	        cerr << batch <<"...";
-            } 
+            }
 
             data_size_t minibatch_start_index = minibatch_size * batch;
             int current_minibatch_size = min(static_cast<data_size_t>(minibatch_size), training_data_size - minibatch_start_index);
-	    Matrix<int,Dynamic,Dynamic> minibatch = training_data.middleCols(minibatch_start_index, current_minibatch_size);
+            Matrix<int,Dynamic,Dynamic> minibatch = training_data.middleCols(minibatch_start_index, current_minibatch_size);
 
             double adjusted_learning_rate = current_learning_rate/current_minibatch_size;
             //cerr<<"Adjusted learning rate: "<<adjusted_learning_rate<<endl;
@@ -425,7 +425,7 @@ int main(int argc, char** argv)
 		for (int sample_id = 1; sample_id < num_noise_samples+1; sample_id++)
 		    for (int train_id = 0; train_id < current_minibatch_size; train_id++)
 		        minibatch_samples(sample_id, train_id) = unigram.sample(rng);
-	    
+	
 		stop_timer(3);
 
 		// Final forward propagation step (sparse)
@@ -446,7 +446,7 @@ int main(int argc, char** argv)
 
 		double minibatch_log_likelihood;
 		start_timer(5);
-		softmax_loss.fProp(scores.leftCols(current_minibatch_size), 
+		softmax_loss.fProp(scores.leftCols(current_minibatch_size),
 				   minibatch_samples,
 				   probs, minibatch_log_likelihood);
 		stop_timer(5);
@@ -471,7 +471,7 @@ int main(int argc, char** argv)
 
 		// Be careful of short minibatch
 		prop.bProp(minibatch.topRows(ngram_size-1),
-			   minibatch_samples.leftCols(current_minibatch_size), 
+			   minibatch_samples.leftCols(current_minibatch_size),
 			   minibatch_weights.leftCols(current_minibatch_size),
 			   adjusted_learning_rate, current_momentum, myParam.L2_reg);
 	    }
@@ -484,9 +484,9 @@ int main(int argc, char** argv)
 
 		double minibatch_log_likelihood;
 		start_timer(5);
-		SoftmaxLogLoss().fProp(scores.leftCols(current_minibatch_size), 
-				       minibatch.row(ngram_size-1), 
-				       probs, 
+		SoftmaxLogLoss().fProp(scores.leftCols(current_minibatch_size),
+				       minibatch.row(ngram_size-1),
+				       probs,
 				       minibatch_log_likelihood);
 		stop_timer(5);
 		log_likelihood += minibatch_log_likelihood;
@@ -494,8 +494,8 @@ int main(int argc, char** argv)
 		///// Backward propagation
 		
 		start_timer(6);
-		SoftmaxLogLoss().bProp(minibatch.row(ngram_size-1).leftCols(current_minibatch_size), 
-				       probs.leftCols(current_minibatch_size), 
+		SoftmaxLogLoss().bProp(minibatch.row(ngram_size-1).leftCols(current_minibatch_size),
+				       probs.leftCols(current_minibatch_size),
 				       minibatch_weights);
 		stop_timer(6);
 		
@@ -548,7 +548,7 @@ int main(int argc, char** argv)
                 int validation_minibatch_start_index = validation_minibatch_size * validation_batch;
 		int current_minibatch_size = min(validation_minibatch_size,
 						 validation_data_size - validation_minibatch_start_index);
-		minibatch.leftCols(current_minibatch_size) = validation_data.middleCols(validation_minibatch_start_index, 
+		minibatch.leftCols(current_minibatch_size) = validation_data.middleCols(validation_minibatch_start_index,
 											current_minibatch_size);
 		prop_validation.fProp(minibatch.topRows(ngram_size-1));
 
@@ -560,7 +560,7 @@ int main(int argc, char** argv)
 		// And softmax and loss. Be careful of short minibatch
 		double minibatch_log_likelihood;
 		start_timer(5);
-		SoftmaxLogLoss().fProp(scores.leftCols(current_minibatch_size), 
+		SoftmaxLogLoss().fProp(scores.leftCols(current_minibatch_size),
 				       minibatch.row(ngram_size-1),
 				       output_probs,
 				       minibatch_log_likelihood);
@@ -573,7 +573,7 @@ int main(int argc, char** argv)
 
 	    // If the validation perplexity decreases, halve the learning rate.
             if (epoch > 0 && log_likelihood < current_validation_ll)
-            { 
+            {
                 current_learning_rate /= 2;
             }
             current_validation_ll = log_likelihood;
