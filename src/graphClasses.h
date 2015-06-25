@@ -22,11 +22,15 @@ class Node {
         Node() : param(NULL), minibatch_size(0) { }
 
         Node(X *input_param, int minibatch_size)
-	  : param(input_param),
-	    minibatch_size(minibatch_size)
+	  : param(input_param)
         {
 	    resize(minibatch_size);
         }
+
+    void init(X const* input_param, int minibatch_size) {
+      param = const_cast<X*>(input_param);
+      resize(minibatch_size);
+    }
 
 	void resize(int minibatch_size)
 	{
@@ -53,7 +57,7 @@ class Node {
             param->fProp(input,fProp_matrix,0,0,n_cols);
         }
         */
-        //for f prop, just call the fProp node of the particular parameter. 
+        //for f prop, just call the fProp node of the particular parameter.
 
 };
 

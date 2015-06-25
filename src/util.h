@@ -59,17 +59,17 @@ void initMatrix(boost::random::mt19937 &engine,
     if (init_normal == 0)
      // initialize with uniform distribution in [-range, range]
     {
-        boost::random::uniform_real_distribution<> unif_real(-range, range); 
+        boost::random::uniform_real_distribution<> unif_real(-range, range);
         for (int i = 0; i < p.rows(); i++)
         {
             for (int j = 0; j< p.cols(); j++)
             {
-                p(i,j) = unif_real(engine);    
+                p(i,j) = unif_real(engine);
             }
         }
 
     }
-    else 
+    else
       // initialize with gaussian distribution with mean 0 and stdev range
     {
         boost::random::normal_distribution<double> unif_normal(0., range);
@@ -77,7 +77,7 @@ void initMatrix(boost::random::mt19937 &engine,
         {
             for (int j = 0; j < p.cols(); j++)
             {
-                p(i,j) = unif_normal(engine);    
+                p(i,j) = unif_normal(engine);
             }
         }
     }
@@ -91,7 +91,7 @@ void readMatrix(std::ifstream &TRAININ, Eigen::MatrixBase<Derived> &param_const)
     int i = 0;
     std::string line;
     std::vector<std::string> fields;
-    
+
     while (std::getline(TRAININ, line) && line != "")
     {
         splitBySpace(line, fields);
@@ -115,7 +115,7 @@ void readMatrix(std::ifstream &TRAININ, Eigen::MatrixBase<Derived> &param_const)
 	}
 	i++;
     }
-    
+
     if (i != param.rows())
     {
         std::ostringstream err;
@@ -129,7 +129,7 @@ void readMatrix(const std::string &param_file, const Eigen::MatrixBase<Derived> 
 {
     UNCONST(Derived, param_const, param);
     std::cerr << "Reading data from file: " << param_file << std::endl;
-    
+
     std::ifstream TRAININ(param_file.c_str());
     if (!TRAININ)
     {
@@ -175,7 +175,7 @@ void writeMatrix(const Eigen::MatrixBase<Derived> &param, std::ofstream &OUT)
 template <typename Derived>
 double logsum(const Eigen::MatrixBase<Derived> &v)
 {
-    int mi; 
+    int mi;
     double m = v.maxCoeff(&mi);
     double logz = 0.0;
     for (int i=0; i<v.rows(); i++)
@@ -188,7 +188,7 @@ double logsum(const Eigen::MatrixBase<Derived> &v)
 double logadd(double x, double y);
 
 #ifdef USE_CHRONO
-class Timer 
+class Timer
 {
     typedef boost::chrono::high_resolution_clock clock_type;
     typedef clock_type::time_point time_type;
@@ -210,8 +210,8 @@ extern Timer timer;
 #define start_timer(x) timer.start(x)
 #define stop_timer(x) timer.stop(x)
 #else
-#define start_timer(x) 0
-#define stop_timer(x) 0
+#define start_timer(x) (void)0
+#define stop_timer(x) (void)0
 #endif
 
 int setup_threads(int n_threads);

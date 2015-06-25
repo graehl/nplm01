@@ -27,8 +27,7 @@ class neuralLMShared {
   public:
     vocabulary input_vocab, output_vocab;
     model nn;
-
-    explicit neuralLMShared(const std::string &filename) {
+    void read(const std::string &filename) {
       std::vector<std::string> input_words, output_words;
       nn.read(filename, input_words, output_words);
       input_vocab = vocabulary(input_words);
@@ -36,9 +35,14 @@ class neuralLMShared {
       // this is faster but takes more memory
       //nn.premultiply();
     }
+
+    neuralLMShared() {}
+    explicit neuralLMShared(const std::string &filename) {
+      read(filename);
+    }
 };
 
-class neuralLM 
+class neuralLM
 {
     // Big stuff shared across instances.
     boost::shared_ptr<neuralLMShared> shared;
@@ -62,26 +66,35 @@ class neuralLM
     Eigen::Matrix<int,Eigen::Dynamic,1> ngram; // buffer for lookup_ngram
     int start, null;
 
-public:
-    neuralLM(const std::string &filename) 
-      : shared(new neuralLMShared(filename)),
-        ngram_size(shared->nn.ngram_size), 
-	normalization(false),
-	weight(1.),
-	map_digits(0),
-	width(1),
-	prop(shared->nn, 1),
-        cache_size(0),
-        start(shared->input_vocab.lookup_word("<s>")),
-        null(shared->input_vocab.lookup_word("<null>"))
+    void init() {
+      normalization = false;
+      weight = 1.;
+      map_digits = 0;
+      width = 1;
+      cache_size = 0;
+    }
+  public:
+    void read(const std::string &filename)
     {
-	ngram.setZero(ngram_size);
-	if (cache_size)
-	{
-	  cache_keys.resize(ngram_size, cache_size);
-	  cache_keys.fill(-1);
-	}
-	prop.resize();
+      shared->read(filename);
+      ngram_size = shared->nn.ngram_size;
+      start = shared->input_vocab.lookup_word("<s>");
+      null = shared->input_vocab.lookup_word("<null>");
+  	ngram.setZero(ngram_size);
+  	if (cache_size)
+  	{
+  	  cache_keys.resize(ngram_size, cache_size);
+  	  cache_keys.fill(-1);
+  	}
+  	prop.init(shared->nn, 1);
+    }
+
+    neuralLM() : shared(new neuralLMShared) {
+      init();
+    }
+    neuralLM(std::string const& filename) : shared(new neuralLMShared) {
+      init();
+      read(filename);
     }
 
     void set_normalization(bool value) { normalization = value; }
@@ -90,8 +103,8 @@ public:
 
     void set_width(int width)
     {
-        this->width = width;
-	prop.resize(width);
+      this->width = width;
+      prop.resize(width);
     }
 
     const vocabulary &get_vocabulary() const { return shared->input_vocab; }
@@ -301,12 +314,12 @@ void makeNgrams(const std::vector<T> &input, std::vector<std::vector<T> > &outpu
 }
 
 inline void preprocessWords(const std::vector<std::string> &words, std::vector< std::vector<int> > &ngrams,
-			    int ngram_size, const vocabulary &vocab, 
+			    int ngram_size, const vocabulary &vocab,
 			    bool numberize, bool add_start_stop, bool ngramize)
 {
   int start = vocab.lookup_word("<s>");
   int stop = vocab.lookup_word("</s>");
-  
+
   // convert words to ints
   std::vector<int> nums;
   if (numberize) {
@@ -317,9 +330,9 @@ inline void preprocessWords(const std::vector<std::string> &words, std::vector< 
   else {
     for (int j=0; j<words.size(); j++) {
       nums.push_back(boost::lexical_cast<int>(words[j]));
-    }            
+    }
   }
-  
+
   // convert sequence to n-grams
   ngrams.clear();
   if (ngramize) {
