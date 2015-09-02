@@ -55,7 +55,7 @@ void model::premultiply()
     premultiplied = true;
 }
 
-void model::readConfig(ifstream &config_file)
+void model::readConfig(istream &config_file)
 {
     string line;
     vector<string> fields;
@@ -120,10 +120,23 @@ void model::read(const string &filename)
     read(filename, input_words, output_words);
 }
 
+void model::read(std::istream &file)
+{
+  vector<string> input_words;
+  vector<string> output_words;
+  read(file, input_words, output_words);
+}
+
+
 void model::read(const string &filename, vector<string> &input_words, vector<string> &output_words)
 {
-    ifstream file(filename.c_str());
-    if (!file) throw runtime_error("Could not open file " + filename);
+  ifstream file(filename.c_str());
+  if (!file) throw runtime_error("Could not open file " + filename);
+  read(file);
+}
+
+void model::read(std::istream &file, vector<string> &input_words, vector<string> &output_words)
+{
 
     param myParam;
     string line;
